@@ -1,0 +1,230 @@
+1. SINGLETON PATTERN
+Đảm bảo duy nhất một thực thể kết nối Database.
+// 1. Class Singleton
+public class DatabaseConnection {
+    private static DatabaseConnection instance;
+
+    private DatabaseConnection() {
+        System.out.println("--- Đang kết nối tới Database IUH ---");
+    }
+
+    public static synchronized DatabaseConnection getInstance() {
+        if (instance == null) {
+            instance = new DatabaseConnection();
+        }
+        return instance;
+    }
+
+    public void executeQuery(String sql) {
+        System.out.println("Đang thực thi: " + sql);
+    }
+}
+
+// 2. Main demo
+public class SingletonDemo {
+    public static void main(String[] args) {
+        DatabaseConnection db1 = DatabaseConnection.getInstance();
+        db1.executeQuery("SELECT * FROM SinhVien");
+
+        DatabaseConnection db2 = DatabaseConnection.getInstance();
+        System.out.println("db1 == db2: " + (db1 == db2));
+    }
+}
+2. FACTORY METHOD PATTERN
+Tạo đối tượng vận chuyển dựa trên yêu cầu.
+// 1. Interface
+interface Transport { void deliver(); }
+
+// 2. Concrete Classes
+class Truck implements Transport {
+    public void deliver() { System.out.println("Giao hàng bằng xe tải qua đường bộ."); }
+}
+
+class Ship implements Transport {
+    public void deliver() { System.out.println("Giao hàng bằng tàu thủy qua đường biển."); }
+}
+
+// 3. Factory
+abstract class Logistics {
+    public abstract Transport createTransport();
+}
+
+class RoadLogistics extends Logistics {
+    public Transport createTransport() { return new Truck(); }
+}
+
+class SeaLogistics extends Logistics {
+    public Transport createTransport() { return new Ship(); }
+}
+
+// 4. Main
+public class FactoryDemo {
+    public static void main(String[] args) {
+        Logistics road = new RoadLogistics();
+        road.createTransport().deliver();
+
+        Logistics sea = new SeaLogistics();
+        sea.createTransport().deliver();
+    }
+}
+3. ABSTRACT FACTORY PATTERN
+Tạo bộ UI (Button & Checkbox) theo hệ điều hành.
+// Products
+interface Button { void paint(); }
+interface Checkbox { void paint(); }
+
+// Windows Products
+class WinButton implements Button { public void paint() { System.out.println("Render Win Button"); } }
+class WinCheckbox implements Checkbox { public void paint() { System.out.println("Render Win Checkbox"); } }
+
+// Mac Products
+class MacButton implements Button { public void paint() { System.out.println("Render Mac Button"); } }
+class MacCheckbox implements Checkbox { public void paint() { System.out.println("Render Mac Checkbox"); } }
+
+// Factory
+interface GUIFactory {
+    Button createButton();
+    Checkbox createCheckbox();
+}
+
+class WinFactory implements GUIFactory {
+    public Button createButton() { return new WinButton(); }
+    public Checkbox createCheckbox() { return new WinCheckbox(); }
+}
+
+class MacFactory implements GUIFactory {
+    public Button createButton() { return new MacButton(); }
+    public Checkbox createCheckbox() { return new MacCheckbox(); }
+}
+
+public class AbstractFactoryDemo {
+    public static void main(String[] args) {
+        GUIFactory factory = new WinFactory();
+        factory.createButton().paint();
+        factory.createCheckbox().paint();
+    }
+}
+4. STRATEGY PATTERN
+Thay đổi linh hoạt phương thức thanh toán.
+interface PaymentStrategy { void pay(int amount); }
+
+class MomoPayment implements PaymentStrategy {
+    public void pay(int amount) { System.out.println("Đã thanh toán " + amount + "đ qua Ví Momo."); }
+}
+
+class ZaloPayPayment implements PaymentStrategy {
+    public void pay(int amount) { System.out.println("Đã thanh toán " + amount + "đ qua ZaloPay."); }
+}
+
+class ShoppingCart {
+    private PaymentStrategy strategy;
+    public void setStrategy(PaymentStrategy strategy) { this.strategy = strategy; }
+    public void checkout(int amount) { strategy.pay(amount); }
+}
+
+public class StrategyDemo {
+    public static void main(String[] args) {
+        ShoppingCart cart = new ShoppingCart();
+        cart.setStrategy(new MomoPayment());
+        cart.checkout(500000);
+
+        cart.setStrategy(new ZaloPayPayment());
+        cart.checkout(200000);
+    }
+}
+5. STATE PATTERN
+Hành vi thay đổi theo trạng thái đơn hàng.
+interface State { void handle(Order order); }
+
+class NewState implements State {
+    public void handle(Order order) {
+        System.out.println("Đơn hàng mới tạo. Chuyển sang Đang giao.");
+        order.setState(new ShippedState());
+    }
+}
+
+class ShippedState implements State {
+    public void handle(Order order) {
+        System.out.println("Đơn hàng đang giao. Chuyển sang Đã nhận.");
+        order.setState(new DeliveredState());
+    }
+}
+
+class DeliveredState implements State {
+    public void handle(Order order) { System.out.println("Đơn hàng đã hoàn thành."); }
+}
+
+class Order {
+    private State state = new NewState();
+    public void setState(State state) { this.state = state; }
+    public void next() { state.handle(this); }
+}
+
+public class StateDemo {
+    public static void main(String[] args) {
+        Order order = new Order();
+        order.next();
+        order.next();
+        order.next();
+    }
+}
+6. OBSERVER PATTERN
+Thông báo cho người dùng khi có tin tức mới.
+import java.util.*;
+
+interface Observer { void update(String news); }
+
+class Subscriber implements Observer {
+    private String name;
+    public Subscriber(String name) { this.name = name; }
+    public void update(String news) { System.out.println(name + " nhận tin: " + news); }
+}
+
+class NewsPublisher {
+    private List<Observer> observers = new ArrayList<>();
+    public void subscribe(Observer o) { observers.add(o); }
+    public void notifyAll(String news) { for(Observer o : observers) o.update(news); }
+}
+
+public class ObserverDemo {
+    public static void main(String[] args) {
+        NewsPublisher publisher = new NewsPublisher();
+        publisher.subscribe(new Subscriber("Minh Huynh"));
+        publisher.subscribe(new Subscriber("Thanh Tùng"));
+
+        publisher.notifyAll("IUH thông báo nghỉ Tết dương lịch 2026!");
+    }
+}
+7. DECORATOR PATTERN
+Thêm topping vào Pizza mà không sửa code cũ.
+interface Pizza { String getDescription(); int getCost(); }
+
+class PlainPizza implements Pizza {
+    public String getDescription() { return "Đế Pizza"; }
+    public int getCost() { return 50; }
+}
+
+abstract class ToppingDecorator implements Pizza {
+    protected Pizza tempPizza;
+    public ToppingDecorator(Pizza newPizza) { tempPizza = newPizza; }
+}
+
+class Cheese extends ToppingDecorator {
+    public Cheese(Pizza p) { super(p); }
+    public String getDescription() { return tempPizza.getDescription() + ", Phô mai"; }
+    public int getCost() { return tempPizza.getCost() + 20; }
+}
+
+class Mushroom extends ToppingDecorator {
+    public Mushroom(Pizza p) { super(p); }
+    public String getDescription() { return tempPizza.getDescription() + ", Nấm"; }
+    public int getCost() { return tempPizza.getCost() + 15; }
+}
+
+public class DecoratorDemo {
+    public static void main(String[] args) {
+        Pizza myPizza = new Mushroom(new Cheese(new PlainPizza()));
+        System.out.println("Mô tả: " + myPizza.getDescription());
+        System.out.println("Tổng tiền: " + myPizza.getCost() + "k");
+    }
+}
